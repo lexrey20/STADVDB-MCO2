@@ -45,7 +45,7 @@ def load_data():
     try:
         file_path = "imdb.csv"
         df = pd.read_csv(file_path)
-        df = df.head(1000)
+        df = df.head(1500)
 
         df['date_x'] = pd.to_datetime(df['date_x'], errors='coerce').dt.strftime('%Y-%m-%d')
         df.fillna("N/A", inplace=True)
@@ -100,6 +100,57 @@ def load_data():
 @app.route('/read_data')
 def read_data():
     try:
+
+        DBHOST1 = "centraln.mysql.database.azure.com"
+        DBHOST2 = "node2.mysql.database.azure.com"
+        DBHOST3 = "node3.mysql.database.azure.com"
+
+        centraln_connected = False
+        node2_connected = False
+        node3_connected = False
+        # test connection to centraln
+        try:
+            cnx = mysql.connector.connect(
+                user=DB_USER,
+                password=DB_PASSWORD,
+                host=DB_HOST,
+                port=DB_PORT,
+                database=DB_NAME,
+            )
+            cnx.close()
+        except mysql.connector.Error as err:
+            return jsonify(message="Failed to connect to Centraln", error=str(err))
+
+        # test connection to node2
+        try:
+            cnx = mysql.connector.connect(
+                user=DB_USER,
+                password=DB_PASSWORD,
+                host="node2.mysql.database.azure.com",
+                port=DB_PORT,
+                database=DB_NAME,
+            )
+            cnx.close()
+        except mysql.connector.Error as err:
+            return jsonify(message="Failed to connect to node2", error=str(err))
+
+        # test connection to node3
+        try:
+            cnx = mysql.connector.connect(
+                user=DB_USER,
+                password=DB_PASSWORD,
+                host="node3.mysql.database.azure.com",
+                port=DB_PORT,
+                database=DB_NAME,
+            )
+            cnx.close()
+        except mysql.connector.Error as err:
+            return jsonify(message="Failed to connect to node3", error=str(err))
+
+        # FRAGMENTATION IMPLEMENTATION
+        # centraln = main node
+        # node2 = replica node
+        # node3 = replica node
         cnx = mysql.connector.connect(
             user=DB_USER,
             password=DB_PASSWORD,
@@ -109,18 +160,58 @@ def read_data():
         )
         cursor = cnx.cursor()
 
-        cursor.execute(f"SELECT * FROM {TABLE_NAME}")
+        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN 1 AND 500")
 
         rows = cursor.fetchall()
 
-        result = ""
+        result1 = ""
         for row in rows:
-            result += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
+            result1 += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
 
         cursor.close()
         cnx.close()
 
-        return result
+        cnx = mysql.connector.connect(
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host="node2.mysql.database.azure.com",
+            port=DB_PORT,
+            database=DB_NAME,
+        )
+        cursor = cnx.cursor()
+
+        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN 501 AND 1000")
+
+        rows = cursor.fetchall()
+
+        result2 = ""
+        for row in rows:
+            result2 += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
+
+        cursor.close()
+        cnx.close()
+
+        cnx = mysql.connector.connect(
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host="node3.mysql.database.azure.com",
+            port=DB_PORT,
+            database=DB_NAME,
+        )
+        cursor = cnx.cursor()
+
+        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN 1001 AND 1500")
+
+        rows = cursor.fetchall()
+
+        result3 = ""
+        for row in rows:
+            result3 += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
+
+        cursor.close()
+        cnx.close()
+
+        return result1 + result2 + result3
 
     except mysql.connector.Error as err:
         return jsonify(message="Failed to read data", error=str(err))
