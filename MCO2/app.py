@@ -4,9 +4,13 @@ import pandas as pd
 from flask_mysqldb import MySQL
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # key for signing session cookies
+app.secret_key = '$K2ToHJP8BK5y4TEZYK@*9JKrMZqY4ZR'  # key for signing session cookies
 
-# Database connection parameters
+@app.before_first_request
+def clear_session():
+    session.clear()  # Clear session data on app startup
+
+# DB conn
 DB_USER = "dbadmin"
 DB_PASSWORD = "Admin0123"
 DB_HOST = "centraln.mysql.database.azure.com"
@@ -27,18 +31,12 @@ db_hosts = {1: None, 2: None, 3: None}
 def hello_world():
     return render_template('index.html')
 
-
-# Dummy address to replace when nodes are turned off
-dummy_address = "dummy.address.com"
-
-
 @app.route('/update_hosts', methods=['POST'])
 def update_hosts():
     node_status = request.json.get('nodeStatus')
     if node_status is None:
         return jsonify(message="Node status not provided", error="Bad request"), 400
 
-    # Set the session data based on the node status
     session['hosts'] = [
         "centraln.mysql.database.azure.com" if node_status['centraln'] else None,
         "node2.mysql.database.azure.com" if node_status['node2'] else None,
@@ -60,23 +58,18 @@ def check_connection():
 @app.route('/load_data')
 def load_data():
     try:
-        # Retrieve the list of hosts from the session
         hosts = session.get('hosts', [])
 
-        # Check if there are any available hosts
         if not hosts:
             return jsonify(message="No hosts available in session", error="Hosts list is empty")
 
-        # Use the first available host (ensure it's not empty)
         host = next((h for h in hosts if h), None)
 
-        # If no valid host is found, return an error message
         if not host:
             return jsonify(message="No valid hosts found", error="No non-empty host in the list")
 
         file_path = "imdb.csv"
         df = pd.read_csv(file_path)
-        df = df.head(1500)
 
         df['date_x'] = pd.to_datetime(df['date_x'], errors='coerce').dt.strftime('%Y-%m-%d')
         df.fillna("N/A", inplace=True)
@@ -145,10 +138,11 @@ def read_data():
     try:
         # RECOVERY IMPLEMENTATION
         available_nodes = []
-        hosts = session.get('hosts', [None, None, None])  # Default to None if hosts not in session
+        hosts = session.get('hosts', [None, None, None])
 
-        # test connection to each host and add available nodes to the list
         for host in hosts:
+            if host is None:
+                continue
             try:
                 cnx = mysql.connector.connect(
                     user=DB_USER,
@@ -159,35 +153,57 @@ def read_data():
                 )
                 cnx.close()
                 available_nodes.append(host)
-            except mysql.connector.Error as err:
+            except mysql.connector.Error:
                 pass
 
         if not available_nodes:
-            return jsonify(message="Failed to connect to any nodes", error="All connection attempts failed.")
+            return jsonify(message="No nodes available", error="All connection attempts failed.")
 
-        # Assign available nodes to db_hosts
-        db_hosts = {}
-        for i in range(1, 4):
-            if i <= len(available_nodes):
-                db_hosts[i] = available_nodes[i - 1]
-            else:
-                db_hosts[i] = available_nodes[-1]
+        db_hosts = {i + 1: available_nodes[i] for i in range(len(available_nodes))}
 
-        # FRAGMENTATION IMPLEMENTATION
+        primary_host = available_nodes[0]
+        cnx = mysql.connector.connect(
+            user=DB_USER,
+            password=DB_PASSWORD,
+            host=primary_host,
+            port=DB_PORT,
+            database=DB_NAME,
+        )
+        cursor = cnx.cursor()
+        cursor.execute(f"SELECT COUNT(*) FROM {TABLE_NAME}")
+        total_rows = cursor.fetchone()[0]
+        cursor.close()
+        cnx.close()
+
         result = []
-        for i in range(1, 4):
-            if db_hosts[i] is not None:
+        num_hosts = len(available_nodes)
+        print("available nodes: ", num_hosts)
+        rows_per_host = total_rows // num_hosts
+        print("total rows: ", total_rows)
+        remainder = total_rows % num_hosts
+
+        for i, host in enumerate(db_hosts.values()):
+            start_id = i * rows_per_host + 1
+            end_id = start_id + rows_per_host - 1
+
+            if i < remainder:
+                end_id += 1
+
+            print(f"Host: {host}, Query: SELECT * FROM {TABLE_NAME} WHERE id BETWEEN {start_id} AND {end_id}")
+
+
+            try:
                 cnx = mysql.connector.connect(
                     user=DB_USER,
                     password=DB_PASSWORD,
-                    host=db_hosts[i],
+                    host=host,
                     port=DB_PORT,
                     database=DB_NAME,
                 )
-                set_isolation_level(cnx, "READ COMMITTED")  # Set isolation level again for each connection
+                set_isolation_level(cnx, "READ COMMITTED")
                 cursor = cnx.cursor()
 
-                cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN {(i-1)*500 + 1} AND {i*500}")
+                cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN {start_id} AND {end_id}")
                 rows = cursor.fetchall()
 
                 for row in rows:
@@ -210,10 +226,14 @@ def read_data():
                 cursor.close()
                 cnx.close()
 
+            except mysql.connector.Error as err:
+                return jsonify(message=f"Failed to fetch data from host {i+1}", error=str(err))
+
         return render_template('data_display.html', data=result)
 
     except mysql.connector.Error as err:
         return jsonify(message="Failed to read data", error=str(err))
+
 
 @app.route('/add_data', methods=['POST', 'GET'])
 def add():
