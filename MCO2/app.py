@@ -234,7 +234,7 @@ def add():
         try:
             cur = db.connection.cursor()
             cur.execute(f"""
-                INSERT INTO movies (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
+                INSERT INTO {TABLE_NAME} (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country))
             db.connection.commit()
