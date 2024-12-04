@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template_string
 import mysql.connector
 import pandas as pd
 
@@ -14,7 +14,45 @@ TABLE_NAME = "imdb"  # Target table name
 
 @app.route('/')
 def hello_world():
-    return 'lex utot'
+    # Simple HTML homepage with buttons/links
+    homepage_html = '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Homepage</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin-top: 50px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+                margin: 20px;
+                border-radius: 5px;
+                border: 1px solid #ccc;
+            }
+            button:hover {
+                background-color: #f0f0f0;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>MCO2 Transaction Management</h1>
+        <p>Choose an option below:</p>
+        <button onclick="window.location.href='/check_connection'">Check Database Connection</button><br>
+        <button onclick="window.location.href='/load_data'">Load Data into Database</button><br>
+        <button onclick="window.location.href='/read_data'">Read Data from Database</button>
+    </body>
+    </html>
+    '''
+    return render_template_string(homepage_html)
+
+
 
 
 @app.route('/check_connection')
@@ -106,8 +144,10 @@ def load_data():
 @app.route('/read_data')
 def read_data():
     try:
+        # RECOVERY IMPLEMENTATION
+        # if 1 host is down, other hosts pick up workload
         available_nodes = []
-        db_hosts = {1: None, 2: None, 3: None}  # Dictionary for db_hosts (1, 2, 3)
+        db_hosts = {1: None, 2: None, 3: None}
 
         hosts = [
             "dadada.mysql.database.azure.com",
