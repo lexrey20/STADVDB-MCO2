@@ -1,6 +1,7 @@
-from flask import Flask, jsonify, session, request, render_template
+from flask import Flask, jsonify, session, request, render_template, redirect
 import mysql.connector
 import pandas as pd
+from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # key for signing session cookies
@@ -12,6 +13,14 @@ DB_HOST = "centraln.mysql.database.azure.com"
 DB_PORT = 3306
 DB_NAME = "mco2"
 TABLE_NAME = "imdb"
+
+app.config['MYSQL_HOST'] = DB_HOST
+app.config['MYSQL_PORT'] = DB_PORT
+app.config['MYSQL_USER'] = DB_USER
+app.config['MYSQL_PASSWORD'] = DB_PASSWORD
+app.config['MYSQL_DB'] = DB_NAME
+
+db = MySQL(app)
 
 db_hosts = {1: None, 2: None, 3: None}
 @app.route('/')
@@ -193,6 +202,49 @@ def read_data():
     except mysql.connector.Error as err:
         return jsonify(message="Failed to read data", error=str(err))
 
+@app.route('/add_data', methods=['POST', 'GET'])
+def add():
+    if request.method == 'POST':
+        names = request.form['names']
+        date_x = request.form['date_x']
+        score = request.form['score']
+        genre = request.form['genre']
+        overview = request.form['overview']
+        crew = request.form['crew']
+        orig_title = request.form['orig_title']
+        status = request.form['status']
+        orig_lang = request.form['orig_lang']
+        budget_x = request.form['budget_x']
+        revenue = request.form['revenue']
+        country = request.form['country']
+
+        try:
+            cur = db.connection.cursor()
+            cur.execute(f"""
+                INSERT INTO movies (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country))
+            db.connection.commit()
+            cur.close()
+
+            return redirect('/')
+        except Exception as e:
+            return f"Error occurred while adding: {str(e)}"
+    else:
+        return render_template('add.html')
+
+
+@app.route('/delete/<string:movie_id>')
+def delete(movie_id):
+    try:
+        cur = db.connection.cursor()
+        cur.execute(f"DELETE FROM movies WHERE id = %s", (movie_id,))
+        db.connection.commit()
+        cur.close()
+
+        return redirect('/')
+    except Exception as e:
+        return f"Error occurred while deleting: {str(e)}"
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -9,5 +9,5 @@ setup(
     author='Lexrey D. Porciuncula',
     author_email='lexrey_porciuncula@dlsu.edu.ph',
     description='Distributed Database MCO2',
-    install_requires=['sqlalchemy', 'flask', 'flask_sqlalchemy'],
+    install_requires=['mysql', 'pandas', 'sqlalchemy', 'flask', 'flask_sqlalchemy'],
 )
