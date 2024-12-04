@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template_string
+from flask import Flask, jsonify, render_template_string, request, render_template
 import mysql.connector
 import pandas as pd
 
@@ -12,67 +12,53 @@ DB_PORT = 3306
 DB_NAME = "mco2"
 TABLE_NAME = "imdb"
 
+# Node addresses
+hosts = [
+    "centraln.mysql.database.azure.com",
+    "node2.mysql.database.azure.com",
+    "node3.mysql.database.azure.com"
+]
+
+db_hosts = {1: None, 2: None, 3: None}
 @app.route('/')
 def hello_world():
-    homepage_html = '''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Homepage</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                text-align: center;
-                margin-top: 50px;
-            }
-            button {
-                padding: 10px 20px;
-                font-size: 16px;
-                cursor: pointer;
-                margin: 20px;
-                border-radius: 5px;
-                border: 1px solid #ccc;
-            }
-            button:hover {
-                background-color: #f0f0f0;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>MCO2 Transaction Management</h1>
-        <p>Choose an option below:</p>
-        <button onclick="window.location.href='/check_connection'">Check Database Connection</button><br>
-        <button onclick="window.location.href='/load_data'">Load Data into Database</button><br>
-        <button onclick="window.location.href='/'">Create Record</button><br>
-        <button onclick="window.location.href='/read_data'">Read Records</button><br>
-        <button onclick="window.location.href='/'">Update Record</button><br>
-        <button onclick="window.location.href='/'">Delete Record</button><br>
-    </body>
-    </html>
-    '''
-    return render_template_string(homepage_html)
+    return render_template('index.html')
+
+
+# Dummy address to replace when nodes are turned off
+dummy_address = "dummy.address.com"
+
+
+@app.route('/update_hosts', methods=['POST'])
+def update_hosts():
+    global hosts
+
+    node_status = request.json.get('nodeStatus')
+
+    if node_status is None:
+        return jsonify(message="Node status not provided", error="Bad request"), 400
+
+    if node_status['centraln']:
+        hosts[0] = "centraln.mysql.database.azure.com"
+    else:
+        hosts[0] = dummy_address
+
+    if node_status['node2']:
+        hosts[1] = "node2.mysql.database.azure.com"
+    else:
+        hosts[1] = dummy_address
+
+    if node_status['node3']:
+        hosts[2] = "node3.mysql.database.azure.com"
+    else:
+        hosts[2] = dummy_address
+
+    return jsonify(message="Hosts updated successfully", hosts=hosts)
+
 
 @app.route('/check_connection')
 def check_connection():
-    try:
-        cnx = mysql.connector.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_NAME,
-        )
-
-        if cnx.is_connected():
-            cnx.close()
-            return jsonify(message="Connection successful")
-        else:
-            return jsonify(message="Connection failed")
-
-    except mysql.connector.Error as err:
-        return jsonify(message="Connection failed", error=str(err))
+    return render_template('manage_nodes.html')
 
 
 @app.route('/load_data')
@@ -150,13 +136,6 @@ def read_data():
         # RECOVERY IMPLEMENTATION
         # if 1 host is down, other hosts pick up workload
         available_nodes = []
-        db_hosts = {1: None, 2: None, 3: None}
-
-        hosts = [
-            "dadada.mysql.database.azure.com",
-            "dsds.mysql.database.azure.com",
-            "node3.mysql.database.azure.com"
-        ]
 
         # test connection to each host and add available nodes to the list
         for host in hosts:

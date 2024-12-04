@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Connection Control</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Node Connection Control</h1>
+    <p>Click a node to toggle its connection state:</p>
+    <button class="node-button on" id="centraln" onclick="toggleNode('centraln')">Central Node (centraln)</button>
+    <button class="node-button on" id="node2" onclick="toggleNode('node2')">Node 2 (node2)</button>
+    <button class="node-button on" id="node3" onclick="toggleNode('node3')">Node 3 (node3)</button>
+    <br>
+    <button class="node-button" onclick="window.location.href='/'">Back to Home</button>
+
+    <script>
+        let nodeStatus = {
+            'centraln': true,
+            'node2': true,
+            'node3': true
+        };
+
+        // Dummy address to replace the actual node addresses
+        const dummyAddress = "dummy.address.com";
+
+        function toggleNode(node) {
+            // Toggle the node status
+            nodeStatus[node] = !nodeStatus[node];
+
+            // Change the button color based on the new state
+            const button = document.getElementById(node);
+            if (nodeStatus[node]) {
+                button.classList.remove('off');
+                button.classList.add('on');
+            } else {
+                button.classList.remove('on');
+                button.classList.add('off');
+            }
+
+            // Update the hosts list on the server
+            fetch('/update_hosts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nodeStatus: nodeStatus })
+            }).then(response => response.json())
+              .then(data => console.log("Hosts updated:", data))
+              .catch(error => console.error('Error updating hosts:', error));
+        }
+    </script>
+</body>
+</html>

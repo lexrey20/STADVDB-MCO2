@@ -1,0 +1,67 @@
+/* General body styling */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin-top: 50px;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+/* Header styling */
+h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Button styling */
+.node-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 15px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+/* "On" state for active nodes */
+.on {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border-color: #4CAF50;
+}
+
+.on:hover {
+    background-color: #45a049; /* Darker green for hover */
+    border-color: #45a049;
+}
+
+/* "Off" state for inactive nodes */
+.off {
+    background-color: #f44336; /* Red */
+    color: white;
+    border-color: #f44336;
+}
+
+.off:hover {
+    background-color: #e53935; /* Darker red for hover */
+    border-color: #e53935;
+}
+
+/* Button hover effect */
+.node-button:hover {
+    transform: scale(1.05); /* Slightly enlarge button on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a soft shadow */
+}
+
+/* Make the page visually clean with some spacing */
+p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+button:focus {
+    outline: none; /* Remove focus outline for a cleaner look */
+}
