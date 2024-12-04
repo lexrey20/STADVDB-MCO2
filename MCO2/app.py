@@ -122,7 +122,6 @@ def set_isolation_level(cnx, level):
 def read_data():
     try:
         # RECOVERY IMPLEMENTATION
-        # if 1 host is down, other hosts pick up workload
         available_nodes = []
         hosts = session.get('hosts', [None, None, None])  # Default to None if hosts not in session
 
@@ -144,6 +143,8 @@ def read_data():
         if not available_nodes:
             return jsonify(message="Failed to connect to any nodes", error="All connection attempts failed.")
 
+        # Assign available nodes to db_hosts
+        db_hosts = {}
         for i in range(1, 4):
             if i <= len(available_nodes):
                 db_hosts[i] = available_nodes[i - 1]
@@ -151,10 +152,7 @@ def read_data():
                 db_hosts[i] = available_nodes[-1]
 
         # FRAGMENTATION IMPLEMENTATION
-        # centraln = main node
-        # node2 = replica node
-        # node3 = replica node
-        result = ""
+        result = []
         for i in range(1, 4):
             if db_hosts[i] is not None:
                 cnx = mysql.connector.connect(
@@ -171,12 +169,26 @@ def read_data():
                 rows = cursor.fetchall()
 
                 for row in rows:
-                    result += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
+                    result.append({
+                        'ID': row[0],
+                        'Name': row[1],
+                        'Date': row[2],
+                        'Score': row[3],
+                        'Genre': row[4],
+                        'Overview': row[5],
+                        'Crew': row[6],
+                        'Orig Title': row[7],
+                        'Status': row[8],
+                        'Orig Lang': row[9],
+                        'Budget': row[10],
+                        'Revenue': row[11],
+                        'Country': row[12]
+                    })
 
                 cursor.close()
                 cnx.close()
 
-        return result
+        return render_template('data_display.html', data=result)
 
     except mysql.connector.Error as err:
         return jsonify(message="Failed to read data", error=str(err))

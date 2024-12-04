@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Display</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <h1>Movie Data Display</h1>
+
+        <!-- Back to Home Button -->
+        <button class="node-button" onclick="window.location.href='/'">Back to Home</button><br>
+
+        <!-- Data Table -->
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Genre</th>
+                    <th>Overview</th>
+                    <th>Crew</th>
+                    <th>Original Title</th>
+                    <th>Status</th>
+                    <th>Original Language</th>
+                    <th>Budget</th>
+                    <th>Revenue</th>
+                    <th>Country</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row['ID'] }}</td>
+                    <td>{{ row['Name'] }}</td>
+                    <td>{{ row['Date'] }}</td>
+                    <td>{{ row['Score'] }}</td>
+                    <td>{{ row['Genre'] }}</td>
+                    <td>{{ row['Overview'] }}</td>
+                    <td>{{ row['Crew'] }}</td>
+                    <td>{{ row['Orig Title'] }}</td>
+                    <td>{{ row['Status'] }}</td>
+                    <td>{{ row['Orig Lang'] }}</td>
+                    <td>{{ row['Budget'] }}</td>
+                    <td>{{ row['Revenue'] }}</td>
+                    <td>{{ row['Country'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        /* General page styling */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        /* Header styling */
+        h1 {
+            margin-bottom: 15px;
+        }
+
+        /* Data table styling */
+        .data-table {
+            width: 100%;
+            margin-top: 25px;
+            border-collapse: collapse;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table th, .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .data-table tr:hover {
+            background-color: #ddd;
+        }
+
+        /* Table responsive design */
+        @media screen and (max-width: 768px) {
+            .data-table {
+                width: 100%;
+                border: 0;
+            }
+
+            .data-table thead {
+                display: none;
+            }
+
+            .data-table tr {
+                margin-bottom: 10px;
+                display: block;
+                border: 1px solid #ccc;
+            }
+
+            .data-table td {
+                display: block;
+                font-size: 14px;
+                text-align: right;
+                padding: 8px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .data-table td:before {
+                content: attr(data-label);
+                font-weight: bold;
+                text-transform: capitalize;
+                display: inline-block;
+                width: 120px;
+                padding-right: 10px;
+            }
+
+        }
+    </style>
+</body>
+</html>
