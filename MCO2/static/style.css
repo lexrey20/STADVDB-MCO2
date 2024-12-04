@@ -7,11 +7,93 @@ body {
     color: #333;
 }
 
+/* Content styling */
+.content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
 /* Header styling */
 h1 {
     font-size: 24px;
     color: #333;
     margin-bottom: 20px;
+}
+
+/* Form container styling */
+.form {
+    background-color: #ffffff;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Form layout */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Input fields and select styling */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Focused input field styling */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
+/* Textarea adjustments */
+textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Label styling */
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+/* Button styling for submit */
+input[type="submit"].node-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 15px;
+    border-radius: 5px;
+    border: 2px solid #ccc;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+/* "On" state for submit button (active state) */
+input[type="submit"].node-button:hover {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border-color: #4CAF50;
+}
+
+input[type="submit"].node-button:active {
+    background-color: #45a049; /* Darker green for active state */
+    border-color: #45a049;
 }
 
 /* Button styling */
@@ -56,12 +138,28 @@ h1 {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a soft shadow */
 }
 
-/* Make the page visually clean with some spacing */
+/* Text paragraph styling */
 p {
     font-size: 18px;
     margin-bottom: 20px;
 }
 
+/* Button focus outline */
 button:focus {
     outline: none; /* Remove focus outline for a cleaner look */
+}
+
+/* Responsive styling for smaller screens */
+@media (max-width: 767px) {
+    .content {
+        padding: 10px;
+    }
+
+    form {
+        gap: 10px;
+    }
+
+    h1 {
+        font-size: 28px; /* Adjust header size for smaller screens */
+    }
 }

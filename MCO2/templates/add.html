@@ -6,10 +6,15 @@
 
 {% block body %}
 <div class="content">
-    <h1 style="text-align: center;">STADVDB Movies</h1>
+    <h1>STADVDB Movies</h1>
+
+    <button class="node-button" onclick="window.location.href='/'">Back to Home</button>
+
+    <!-- Status Message (fixed at the top of the page) -->
+    <div id="status-message" style="display:none; padding: 10px; background-color: #f4f7f6; color: #333; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999; font-weight: bold;"></div>
 
     <div class="form">
-        <form action="/add_data" method="POST">
+        <form id="movieForm">
             <!-- Name -->
             Name <input type="text" name="names" placeholder="Creed III"><br>
 
@@ -21,14 +26,13 @@
 
             <!-- Genre -->
             <label for="genre">Genre:</label>
-            <!-- Simple text input for genres -->
             <input type="text" id="genre" name="genre" placeholder="Drama, Action"><br>
 
             <!-- Overview -->
-            Overview <textarea name="overview" placeholder="After dominating the boxing world, Adonis Creed has been thriving in both his career and family life. When a childhood friend and former boxing prodigy, Damien Anderson, resurfaces after serving a long sentence in prison, he is eager to prove that he des..."></textarea><br>
+            Overview <textarea name="overview" placeholder="Movie overview here..."></textarea><br>
 
             <!-- Crew -->
-            Crew <input type="text" name="crew" placeholder="Michael B. Jordan, Adonis Creed, Tessa Thompson, Bianca Taylor, Jonathan Majors, Damien Anderson, Wood Harris, Tony 'Little Duke' Evers, Phylicia Rashād, Mary Anne Creed, Mila Davis-Kent, Amara Creed, Florian Munteanu, Viktor Drago, José Benavidez Jr.,..."><br>
+            Crew <input type="text" name="crew" placeholder="Michael B. Jordan, Adonis Creed, etc."><br>
 
             <!-- Original Title -->
             Original Title <input type="text" name="orig_title" placeholder="Creed III"><br>
@@ -53,8 +57,57 @@
             <!-- Country -->
             Country <input type="text" name="country" placeholder="AU" maxlength="2"><br>
 
-            <input type="submit" value="Add Movie">
+            <input class="node-button" type="submit" value="Add Movie">
         </form>
     </div>
 </div>
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery -->
+
+<script>
+    $(document).ready(function() {
+        $('#movieForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Show loading message
+            $('#status-message').text('Loading data... Please wait...').css('background-color', '#f0ad4e').show();
+
+            // Get form data
+            var formData = $(this).serialize();  // Collect all form data
+
+            // Make AJAX request to add data (POST method)
+            $.ajax({
+                url: '/add_data', // This will be the URL to add data
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    // Check if the response contains an error message
+                    if (response.error) {
+                        // If there is an error
+                        $('#status-message').text('Failed to add record: ' + response.error).css('background-color', '#d9534f');
+                    } else {
+                        // Show success message
+                        $('#status-message').text(response.message).css('background-color', '#4CAF50');
+                    }
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        $('#status-message').fadeOut(1500); // Fade out in 1.5 seconds
+                    }, 3000); // Wait for 3 seconds before fading
+                },
+                error: function(xhr, status, error) {
+                    // Show error message
+                    $('#status-message').text('Failed to add record: ' + error).css('background-color', '#d9534f');
+
+                    // Fade out the message after 3 seconds
+                    setTimeout(function() {
+                        $('#status-message').fadeOut(1500); // Fade out in 1.5 seconds
+                    }, 3000); // Wait for 3 seconds before fading
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %}

@@ -231,10 +231,10 @@ def read_data():
     except mysql.connector.Error as err:
         return jsonify(message="Failed to read data", error=str(err))
 
-
 @app.route('/add_data', methods=['POST', 'GET'])
 def add():
     if request.method == 'POST':
+        # Extract form data
         names = request.form['names']
         date_x = request.form['date_x']
         score = request.form['score']
@@ -294,12 +294,15 @@ def add():
                 except mysql.connector.Error as err:
                     return jsonify(message=f"Failed to add data to host {host}", error=str(err))
 
-            return redirect('/')
+            # Return success response for AJAX
+            return jsonify(message="Record successfully added"), 200
 
         except Exception as e:
-            return f"Error occurred while adding: {str(e)}"
+            return jsonify(message="Error occurred while adding", error=str(e)), 500
     else:
         return render_template('add.html')
+
+
 @app.route('/delete/<string:movie_id>')
 def delete(movie_id):
     try:
