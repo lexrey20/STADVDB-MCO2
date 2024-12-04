@@ -1,0 +1,17 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Delete Movie Record</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <h2>Delete Movie Record</h2>
+        <form action="/delete_data" method="POST">
+            <label for="id">Movie ID:</label>
+            <input type="text" id="id" name="id" required>
+            <button type="submit">Delete Movie</button>
+        </form>
+    </body>
+    </html>

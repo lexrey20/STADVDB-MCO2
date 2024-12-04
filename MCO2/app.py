@@ -303,17 +303,65 @@ def add():
         return render_template('add.html')
 
 
-@app.route('/delete/<string:movie_id>')
-def delete(movie_id):
-    try:
-        cur = db.connection.cursor()
-        cur.execute(f"DELETE FROM movies WHERE id = %s", (movie_id,))
-        db.connection.commit()
-        cur.close()
+@app.route('/delete_data', methods=['POST', 'GET'])
+def delete_data():
+    if request.method == 'POST':
+        id = request.form.get('id')
 
-        return redirect('/')
-    except Exception as e:
-        return f"Error occurred while deleting: {str(e)}"
+        if not id:
+            return jsonify(message="Movie ID is required", error="Bad request"), 400
+
+        try:
+            # RECOVERY IMPLEMENTATION
+            available_nodes = []
+            hosts = session.get('hosts', [None, None, None])
+
+            # Check available hosts
+            for host in hosts:
+                if host is None:
+                    continue
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cnx.close()
+                    available_nodes.append(host)
+                except mysql.connector.Error:
+                    pass
+
+            if not available_nodes:
+                return jsonify(message="No nodes available", error="All connection attempts failed.")
+
+            # Delete the record from all available nodes for redundancy
+            for host in available_nodes:
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cursor = cnx.cursor()
+                    cursor.execute(f"DELETE FROM {TABLE_NAME} WHERE id = %s", (id,))
+                    cnx.commit()
+                    cursor.close()
+                    cnx.close()
+                except mysql.connector.Error as err:
+                    return jsonify(message=f"Failed to delete data from host {host}", error=str(err))
+
+            # Return success response for AJAX
+            return jsonify(message="Movie record deleted successfully"), 200
+
+        except Exception as e:
+            return jsonify(message="Failed to delete record", error=str(e)), 500
+
+    else:
+        return render_template('delete.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
