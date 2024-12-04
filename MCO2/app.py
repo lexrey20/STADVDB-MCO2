@@ -6,15 +6,14 @@ app = Flask(__name__)
 
 # Database connection parameters
 DB_USER = "dbadmin"
-DB_PASSWORD = "Admin0123"  # Replace with your actual password
+DB_PASSWORD = "Admin0123"
 DB_HOST = "centraln.mysql.database.azure.com"
 DB_PORT = 3306
-DB_NAME = "mco2"  # Replace with your actual database name
-TABLE_NAME = "imdb"  # Target table name
+DB_NAME = "mco2"
+TABLE_NAME = "imdb"
 
 @app.route('/')
 def hello_world():
-    # Simple HTML homepage with buttons/links
     homepage_html = '''
     <!DOCTYPE html>
     <html lang="en">
@@ -46,19 +45,18 @@ def hello_world():
         <p>Choose an option below:</p>
         <button onclick="window.location.href='/check_connection'">Check Database Connection</button><br>
         <button onclick="window.location.href='/load_data'">Load Data into Database</button><br>
-        <button onclick="window.location.href='/read_data'">Read Data from Database</button>
+        <button onclick="window.location.href='/'">Create Record</button><br>
+        <button onclick="window.location.href='/read_data'">Read Records</button><br>
+        <button onclick="window.location.href='/'">Update Record</button><br>
+        <button onclick="window.location.href='/'">Delete Record</button><br>
     </body>
     </html>
     '''
     return render_template_string(homepage_html)
 
-
-
-
 @app.route('/check_connection')
 def check_connection():
     try:
-        # Try to connect to the database using mysql.connector
         cnx = mysql.connector.connect(
             user=DB_USER,
             password=DB_PASSWORD,
@@ -67,9 +65,8 @@ def check_connection():
             database=DB_NAME,
         )
 
-        # Check if the connection is successful
         if cnx.is_connected():
-            cnx.close()  # Close the connection after checking
+            cnx.close()
             return jsonify(message="Connection successful")
         else:
             return jsonify(message="Connection failed")
@@ -117,7 +114,6 @@ def load_data():
             );
         """)
 
-        # Preparing data for batch insert
         insert_data = []
         for _, row in df.iterrows():
             insert_data.append((
@@ -126,13 +122,12 @@ def load_data():
                 row['status'], row['orig_lang'], row['budget_x'], row['revenue'], row['country']
             ))
 
-        # Using executemany for batch insert
+        # batch insert
         cursor.executemany(f"""
             INSERT INTO {TABLE_NAME} (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, insert_data)
 
-        # Commit changes
         cnx.commit()
         cursor.close()
         cnx.close()
@@ -140,6 +135,14 @@ def load_data():
         return jsonify(message="Data loaded successfully")
     except Exception as e:
         return jsonify(message="Failed to load data", error=str(e))
+
+def set_isolation_level(cnx, level):
+    try:
+        cursor = cnx.cursor()
+        cursor.execute(f"SET SESSION TRANSACTION ISOLATION LEVEL {level}")
+        cursor.close()
+    except Exception as e:
+        print(f"Error setting isolation level: {e}")
 
 @app.route('/read_data')
 def read_data():
@@ -185,14 +188,15 @@ def read_data():
         # node3 = replica node
         result = ""
         for i in range(1, 4):
-            if db_hosts[i] is not None:  # If the host is available
+            if db_hosts[i] is not None:
                 cnx = mysql.connector.connect(
                     user=DB_USER,
                     password=DB_PASSWORD,
-                    host=db_hosts[i],  # Use the host from db_hosts dictionary
+                    host=db_hosts[i],
                     port=DB_PORT,
                     database=DB_NAME,
                 )
+                set_isolation_level(cnx, "READ COMMITTED")  # Set isolation level again for each connection
                 cursor = cnx.cursor()
 
                 cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN {(i-1)*500 + 1} AND {i*500}")
