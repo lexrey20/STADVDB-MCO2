@@ -302,6 +302,191 @@ def add():
     else:
         return render_template('add.html')
 
+# Route to display all records (with a link to edit each record)
+@app.route('/edit_list', methods=['GET'])
+def edit_list():
+    try:
+        # Get available nodes
+        available_nodes = []
+        hosts = session.get('hosts', [None, None, None])
+
+        for host in hosts:
+            if host is None:
+                continue
+            try:
+                cnx = mysql.connector.connect(
+                    user=DB_USER,
+                    password=DB_PASSWORD,
+                    host=host,
+                    port=DB_PORT,
+                    database=DB_NAME,
+                )
+                cnx.close()
+                available_nodes.append(host)
+            except mysql.connector.Error:
+                pass
+
+        if not available_nodes:
+            return render_template('edit_list.html', message="No nodes available to retrieve data.")
+
+        # Fetch records from the database
+        records = []
+        for host in available_nodes:
+            try:
+                cnx = mysql.connector.connect(
+                    user=DB_USER,
+                    password=DB_PASSWORD,
+                    host=host,
+                    port=DB_PORT,
+                    database=DB_NAME,
+                )
+                cursor = cnx.cursor()
+                cursor.execute(f"SELECT id, names FROM {TABLE_NAME}")
+                records = cursor.fetchall()
+                cursor.close()
+                cnx.close()
+
+                if records:
+                    break
+            except mysql.connector.Error as err:
+                pass
+
+        if not records:
+            return render_template('edit_list.html', message="No records found.")
+
+        # Pass the list of records to the template
+        return render_template('edit_list.html', records=records)
+
+    except Exception as e:
+        return render_template('edit_list.html', message="Error occurred while retrieving records.")
+
+@app.route('/edit_data/<int:movie_id>', methods=['POST', 'GET'])
+def edit(movie_id):
+    if request.method == 'POST':
+        # Extract form data
+        names = request.form['names']
+        date_x = request.form['date_x']
+        score = request.form['score']
+        genre = request.form['genre']
+        overview = request.form['overview']
+        crew = request.form['crew']
+        orig_title = request.form['orig_title']
+        status = request.form['status']
+        orig_lang = request.form['orig_lang']
+        budget_x = request.form['budget_x']
+        revenue = request.form['revenue']
+        country = request.form['country']
+
+        try:
+            # RECOVERY IMPLEMENTATION
+            available_nodes = []
+            hosts = session.get('hosts', [None, None, None])
+
+            # Check available hosts
+            for host in hosts:
+                if host is None:
+                    continue
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cnx.close()
+                    available_nodes.append(host)
+                except mysql.connector.Error:
+                    pass
+
+            if not available_nodes:
+                return jsonify(message="No nodes available", error="All connection attempts failed.")
+
+            # Update record in all available nodes for redundancy
+            for host in available_nodes:
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cursor = cnx.cursor()
+                    cursor.execute(f"""
+                        UPDATE {TABLE_NAME} 
+                        SET names = %s, date_x = %s, score = %s, genre = %s, overview = %s, crew = %s, orig_title = %s, 
+                            status = %s, orig_lang = %s, budget_x = %s, revenue = %s, country = %s 
+                        WHERE id = %s
+                    """, (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country, movie_id))
+                    cnx.commit()
+                    cursor.close()
+                    cnx.close()
+                except mysql.connector.Error as err:
+                    return jsonify(message=f"Failed to update data to host {host}", error=str(err))
+
+            # Return success response for AJAX
+            return jsonify(message="Record successfully updated"), 200
+
+        except Exception as e:
+            return jsonify(message="Error occurred while updating", error=str(e)), 500
+    else:
+        # Retrieve the existing movie data for pre-populating the form
+        try:
+            available_nodes = []
+            hosts = session.get('hosts', [None, None, None])
+
+            # Check available hosts
+            for host in hosts:
+                if host is None:
+                    continue
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cnx.close()
+                    available_nodes.append(host)
+                except mysql.connector.Error:
+                    pass
+
+            if not available_nodes:
+                return render_template('edit.html', message="No nodes available to retrieve data.")
+
+            # Retrieve record data from all available nodes
+            movie_data = None
+            for host in available_nodes:
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cursor = cnx.cursor()
+                    cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id = %s", (movie_id,))
+                    movie_data = cursor.fetchone()
+                    cursor.close()
+                    cnx.close()
+
+                    if movie_data:
+                        break
+
+                except mysql.connector.Error as err:
+                    pass
+
+            if not movie_data:
+                return render_template('edit.html', message="Movie not found.")
+
+            # Pre-populate the form with existing data
+            return render_template('edit.html', movie_data=movie_data)
+
+        except Exception as e:
+            return render_template('edit.html', message="Error occurred while retrieving data.")
 
 @app.route('/delete_data', methods=['POST', 'GET'])
 def delete_data():

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Movie Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery -->
+</head>
+<body>
+    <!-- Status Message (fixed at the top of the page) -->
+    <div id="status-message" style="display:none; padding: 10px; background-color: #f4f7f6; color: #333; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999; font-weight: bold;"></div>
+
+    <h1>Edit Movie Records</h1>
+    <button class="node-button" onclick="window.location.href='/'">Back to Home</button>
+    <!-- Search Bar -->
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="search-bar" placeholder="Search movie by name..." style="padding: 10px; width: 100%; font-size: 16px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+
+    <div class="records">
+        <!-- Show a message if there are issues or records to show -->
+        {% if message %}
+            <p style="color: red;">{{ message }}</p>
+        {% else %}
+            <ul id="movie-list" style="list-style: none; padding: 0;">
+                {% for record in records %}
+                    <li class="movie-item" style="margin-bottom: 15px;">
+                        <a href="{{ url_for('edit', movie_id=record[0]) }}" style="text-decoration: none; font-size: 18px; color: #007bff; font-weight: bold;">
+                            {{ record[1] }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Search functionality
+            $('#search-bar').on('input', function() {
+                var searchTerm = $(this).val().toLowerCase(); // Get the search term and convert it to lowercase
+                $('#movie-list .movie-item').each(function() {
+                    var movieName = $(this).text().toLowerCase(); // Get the movie name and convert to lowercase
+                    if (movieName.includes(searchTerm)) {
+                        $(this).show(); // Show the item if it matches the search term
+                    } else {
+                        $(this).hide(); // Hide the item if it doesn't match the search term
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

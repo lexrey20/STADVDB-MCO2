@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Edit Movie Records</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% endblock %}
+
+{% block body %}
+    <h1>Edit Movie Record</h1>
+<div class="content">
+    <button class="node-button" onclick="window.location.href='/'">Back to Home</button>
+
+    <!-- Status Message (fixed at the top of the page) -->
+    <div id="status-message" style="display:none; padding: 10px; background-color: #f4f7f6; color: #333; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999; font-weight: bold;"></div>
+
+    <div class="form">
+        <form method="POST" id="movieForm">
+            <!-- Name -->
+            <label for="names">Name:</label>
+            <input type="text" name="names" id="names" value="{{ movie_data[1] }}" placeholder="Enter movie name" required><br>
+
+            <!-- Release Date -->
+            <label for="date_x">Release Date:</label>
+            <input type="text" name="date_x" id="date_x" value="{{ movie_data[2] }}" placeholder="MM/DD/YYYY" required><br>
+
+            <!-- Score -->
+            <label for="score">Score:</label>
+            <input type="number" name="score" id="score" value="{{ movie_data[3] }}" placeholder="73" max="100" required><br>
+
+            <!-- Genre -->
+            <label for="genre">Genre:</label>
+            <input type="text" name="genre" id="genre" value="{{ movie_data[4] }}" placeholder="Drama, Action" required><br>
+
+            <!-- Overview -->
+            <label for="overview">Overview:</label>
+            <input type="text" name="overview" id="overview" value="{{ movie_data[5] }}" placeholder="Movie overview here..." required><br>
+
+            <!-- Crew -->
+            <label for="crew">Crew:</label>
+            <input type="text" name="crew" id="crew" value="{{ movie_data[6] }}" placeholder="Michael B. Jordan, etc." required><br>
+
+            <!-- Original Title -->
+            <label for="orig_title">Original Title:</label>
+            <input type="text" name="orig_title" id="orig_title" value="{{ movie_data[7] }}" placeholder="Original movie title" required><br>
+
+            <!-- Status -->
+            <label for="status">Status:</label>
+            <input type="text" name="status" id="status" value="{{ movie_data[8] }}" placeholder="Released, Post-production" required><br>
+
+            <!-- Original Language -->
+            <label for="orig_lang">Original Language:</label>
+            <input type="text" name="orig_lang" id="orig_lang" value="{{ movie_data[9] }}" placeholder="English" required><br>
+
+            <!-- Budget -->
+            <label for="budget_x">Budget:</label>
+            <input type="text" name="budget_x" id="budget_x" value="{{ movie_data[10] }}" placeholder="75000000" required><br>
+
+            <!-- Revenue -->
+            <label for="revenue">Revenue:</label>
+            <input type="text" name="revenue" id="revenue" value="{{ movie_data[11] }}" placeholder="271616668.0" required><br>
+
+            <!-- Country -->
+            <label for="country">Country:</label>
+            <input type="text" name="country" id="country" value="{{ movie_data[12] }}" placeholder="AU" maxlength="2" required><br>
+
+            <input class="node-button" type="submit" value="Update Movie">
+        </form>
+    </div>
+</div>
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery -->
+
+<script>
+    $(document).ready(function() {
+        // Handle form submission
+        $('#movieForm').on('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // Validate required fields
+            var isValid = true;
+            $(this).find('input, textarea, select').each(function() {
+                if ($(this).prop('required') && !$(this).val()) {
+                    isValid = false;
+                    $(this).css('border', '1px solid red'); // Highlight empty fields
+                } else {
+                    $(this).css('border', ''); // Reset border if filled
+                }
+            });
+
+            if (!isValid) {
+                $('#status-message').text('Please fill in all required fields.').css('background-color', '#d9534f').show();
+                setTimeout(function() {
+                    $('#status-message').fadeOut(1500); // Fade out after 3 seconds
+                }, 3000);
+                return; // Prevent form submission if validation fails
+            }
+
+            // Show loading message
+            $('#status-message').text('Loading data... Please wait...').css('background-color', '#f0ad4e').show();
+
+            // Get form data
+            var formData = $(this).serialize(); // Serialize form data
+
+            // Make AJAX request to update data (POST method)
+            $.ajax({
+                url: '/edit_data/{{ movie_data[0] }}', // Use movie ID in the URL
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.error) {
+                        $('#status-message').text('Failed to update record: ' + response.error).css('background-color', '#d9534f');
+                    } else {
+                        $('#status-message').text(response.message).css('background-color', '#4CAF50');
+                    }
+
+                    setTimeout(function() {
+                        $('#status-message').fadeOut(1500); // Fade out after 3 seconds
+                    }, 3000);
+                },
+                error: function(xhr, status, error) {
+                    $('#status-message').text('Failed to update record: ' + error).css('background-color', '#d9534f');
+                    setTimeout(function() {
+                        $('#status-message').fadeOut(1500); // Fade out after 3 seconds
+                    }, 3000);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

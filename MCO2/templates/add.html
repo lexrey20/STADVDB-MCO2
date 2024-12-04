@@ -5,8 +5,8 @@
 {% endblock %}
 
 {% block body %}
+    <h1>Create Record</h1>
 <div class="content">
-    <h1>STADVDB Movies</h1>
 
     <button class="node-button" onclick="window.location.href='/'">Back to Home</button>
 
@@ -16,46 +16,46 @@
     <div class="form">
         <form id="movieForm">
             <!-- Name -->
-            Name <input type="text" name="names" placeholder="Creed III"><br>
+            Name <input type="text" name="names" placeholder="Creed III" required><br>
 
             <!-- Release Date -->
-            Release Date <input type="date" name="date_x" value="2023-03-02"><br>
+            Release Date <input type="date" name="date_x" value="2023-03-02" required><br>
 
             <!-- Score -->
-            Score <input type="number" name="score" step="1" max="100" placeholder="73"><br>
+            Score <input type="number" name="score" step="1" max="100" placeholder="73" required><br>
 
             <!-- Genre -->
             <label for="genre">Genre:</label>
-            <input type="text" id="genre" name="genre" placeholder="Drama, Action"><br>
+            <input type="text" id="genre" name="genre" placeholder="Drama, Action" required><br>
 
             <!-- Overview -->
-            Overview <textarea name="overview" placeholder="Movie overview here..."></textarea><br>
+            Overview <textarea name="overview" placeholder="Movie overview here..." required></textarea><br>
 
             <!-- Crew -->
-            Crew <input type="text" name="crew" placeholder="Michael B. Jordan, Adonis Creed, etc."><br>
+            Crew <input type="text" name="crew" placeholder="Michael B. Jordan, Adonis Creed, etc." required><br>
 
             <!-- Original Title -->
-            Original Title <input type="text" name="orig_title" placeholder="Creed III"><br>
+            Original Title <input type="text" name="orig_title" placeholder="Creed III" required><br>
 
             <!-- Status -->
             <label for="status">Status:</label>
-            <select id="status" name="status">
+            <select id="status" name="status" required>
               <option value="released" selected>Released</option>
               <option value="post_production">Post Production</option>
               <option value="in_production">In Production</option>
             </select><br>
 
             <!-- Original Language -->
-            Original Language <input type="text" name="orig_lang" placeholder="English"><br>
+            Original Language <input type="text" name="orig_lang" placeholder="English" required><br>
 
             <!-- Budget -->
-            Budget <input type="number" name="budget_x" step="0.01" placeholder="75000000"><br>
+            Budget <input type="number" name="budget_x" step="0.01" placeholder="75000000" required><br>
 
             <!-- Revenue -->
-            Revenue <input type="number" name="revenue" step="0.01" placeholder="271616668.0"><br>
+            Revenue <input type="number" name="revenue" step="0.01" placeholder="271616668.0" required><br>
 
             <!-- Country -->
-            Country <input type="text" name="country" placeholder="AU" maxlength="2"><br>
+            Country <input type="text" name="country" placeholder="AU" maxlength="2" required><br>
 
             <input class="node-button" type="submit" value="Add Movie">
         </form>
@@ -69,6 +69,25 @@
     $(document).ready(function() {
         $('#movieForm').on('submit', function(event) {
             event.preventDefault(); // Prevent default form submission
+
+            // Check if all required fields are filled
+            var isValid = true;
+            $(this).find('input, textarea, select').each(function() {
+                if ($(this).prop('required') && !$(this).val()) {
+                    isValid = false;
+                    $(this).css('border', '1px solid red'); // Highlight empty fields
+                } else {
+                    $(this).css('border', ''); // Reset border if field is filled
+                }
+            });
+
+            if (!isValid) {
+                $('#status-message').text('Please fill in all required fields.').css('background-color', '#d9534f').show();
+                setTimeout(function() {
+                    $('#status-message').fadeOut(1500); // Fade out in 1.5 seconds
+                }, 3000);
+                return; // Prevent form submission
+            }
 
             // Show loading message
             $('#status-message').text('Loading data... Please wait...').css('background-color', '#f0ad4e').show();

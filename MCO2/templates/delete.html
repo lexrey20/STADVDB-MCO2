@@ -7,11 +7,12 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
     <body>
-        <h2>Delete Movie Record</h2>
+        <h1>Delete Movie Record</h1>
+        <button class="node-button">Back to Home</button>
         <form action="/delete_data" method="POST">
             <label for="id">Movie ID:</label>
             <input type="text" id="id" name="id" required>
-            <button type="submit">Delete Movie</button>
+            <button class="node-button" type="submit">Delete Movie</button>
         </form>
     </body>
     </html>
