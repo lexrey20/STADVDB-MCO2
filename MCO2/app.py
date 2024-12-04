@@ -102,6 +102,7 @@ def load_data():
         return jsonify(message="Data loaded successfully")
     except Exception as e:
         return jsonify(message="Failed to load data", error=str(e))
+
 @app.route('/read_data')
 def read_data():
     try:
@@ -135,6 +136,8 @@ def read_data():
         for i in range(1, 4):
             if i <= len(available_nodes):
                 db_hosts[i] = available_nodes[i - 1]
+            else:
+                db_hosts[i] = available_nodes[-1]
 
         # FRAGMENTATION IMPLEMENTATION
         # centraln = main node
