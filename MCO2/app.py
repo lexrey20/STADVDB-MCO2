@@ -79,16 +79,22 @@ def load_data():
             );
         """)
 
+        # Preparing data for batch insert
+        insert_data = []
         for _, row in df.iterrows():
-            cursor.execute(f"""
-                INSERT INTO {TABLE_NAME} (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
+            insert_data.append((
                 row['names'], row['date_x'], row['score'], row['genre'],
                 row['overview'], row['crew'], row['orig_title'],
                 row['status'], row['orig_lang'], row['budget_x'], row['revenue'], row['country']
             ))
 
+        # Using executemany for batch insert
+        cursor.executemany(f"""
+            INSERT INTO {TABLE_NAME} (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, insert_data)
+
+        # Commit changes
         cnx.commit()
         cursor.close()
         cnx.close()
@@ -96,122 +102,66 @@ def load_data():
         return jsonify(message="Data loaded successfully")
     except Exception as e:
         return jsonify(message="Failed to load data", error=str(e))
-
 @app.route('/read_data')
 def read_data():
     try:
+        available_nodes = []
+        db_hosts = {1: None, 2: None, 3: None}  # Dictionary for db_hosts (1, 2, 3)
 
-        DBHOST1 = "centraln.mysql.database.azure.com"
-        DBHOST2 = "node2.mysql.database.azure.com"
-        DBHOST3 = "node3.mysql.database.azure.com"
+        hosts = [
+            "dadada.mysql.database.azure.com",
+            "dsds.mysql.database.azure.com",
+            "node3.mysql.database.azure.com"
+        ]
 
-        centraln_connected = False
-        node2_connected = False
-        node3_connected = False
-        # test connection to centraln
-        try:
-            cnx = mysql.connector.connect(
-                user=DB_USER,
-                password=DB_PASSWORD,
-                host=DB_HOST,
-                port=DB_PORT,
-                database=DB_NAME,
-            )
-            cnx.close()
-        except mysql.connector.Error as err:
-            return jsonify(message="Failed to connect to Centraln", error=str(err))
+        # test connection to each host and add available nodes to the list
+        for host in hosts:
+            try:
+                cnx = mysql.connector.connect(
+                    user=DB_USER,
+                    password=DB_PASSWORD,
+                    host=host,
+                    port=DB_PORT,
+                    database=DB_NAME,
+                )
+                cnx.close()
+                available_nodes.append(host)
+            except mysql.connector.Error as err:
+                pass
 
-        # test connection to node2
-        try:
-            cnx = mysql.connector.connect(
-                user=DB_USER,
-                password=DB_PASSWORD,
-                host="node2.mysql.database.azure.com",
-                port=DB_PORT,
-                database=DB_NAME,
-            )
-            cnx.close()
-        except mysql.connector.Error as err:
-            return jsonify(message="Failed to connect to node2", error=str(err))
+        if not available_nodes:
+            return jsonify(message="Failed to connect to any nodes", error="All connection attempts failed.")
 
-        # test connection to node3
-        try:
-            cnx = mysql.connector.connect(
-                user=DB_USER,
-                password=DB_PASSWORD,
-                host="node3.mysql.database.azure.com",
-                port=DB_PORT,
-                database=DB_NAME,
-            )
-            cnx.close()
-        except mysql.connector.Error as err:
-            return jsonify(message="Failed to connect to node3", error=str(err))
+        for i in range(1, 4):
+            if i <= len(available_nodes):
+                db_hosts[i] = available_nodes[i - 1]
 
         # FRAGMENTATION IMPLEMENTATION
         # centraln = main node
         # node2 = replica node
         # node3 = replica node
-        cnx = mysql.connector.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host=DB_HOST,
-            port=DB_PORT,
-            database=DB_NAME,
-        )
-        cursor = cnx.cursor()
+        result = ""
+        for i in range(1, 4):
+            if db_hosts[i] is not None:  # If the host is available
+                cnx = mysql.connector.connect(
+                    user=DB_USER,
+                    password=DB_PASSWORD,
+                    host=db_hosts[i],  # Use the host from db_hosts dictionary
+                    port=DB_PORT,
+                    database=DB_NAME,
+                )
+                cursor = cnx.cursor()
 
-        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN 1 AND 500")
+                cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN {(i-1)*500 + 1} AND {i*500}")
+                rows = cursor.fetchall()
 
-        rows = cursor.fetchall()
+                for row in rows:
+                    result += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
 
-        result1 = ""
-        for row in rows:
-            result1 += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
+                cursor.close()
+                cnx.close()
 
-        cursor.close()
-        cnx.close()
-
-        cnx = mysql.connector.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host="node2.mysql.database.azure.com",
-            port=DB_PORT,
-            database=DB_NAME,
-        )
-        cursor = cnx.cursor()
-
-        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN 501 AND 1000")
-
-        rows = cursor.fetchall()
-
-        result2 = ""
-        for row in rows:
-            result2 += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
-
-        cursor.close()
-        cnx.close()
-
-        cnx = mysql.connector.connect(
-            user=DB_USER,
-            password=DB_PASSWORD,
-            host="node3.mysql.database.azure.com",
-            port=DB_PORT,
-            database=DB_NAME,
-        )
-        cursor = cnx.cursor()
-
-        cursor.execute(f"SELECT * FROM {TABLE_NAME} WHERE id BETWEEN 1001 AND 1500")
-
-        rows = cursor.fetchall()
-
-        result3 = ""
-        for row in rows:
-            result3 += f"ID: {row[0]}, Name: {row[1]}, Date: {row[2]}, Score: {row[3]}, Genre: {row[4]}, Overview: {row[5]}, Crew: {row[6]}, Orig Title: {row[7]}, Status: {row[8]}, Orig Lang: {row[9]}, Budget: {row[10]}, Revenue: {row[11]}, Country: {row[12]}\n"
-
-        cursor.close()
-        cnx.close()
-
-        return result1 + result2 + result3
+        return result
 
     except mysql.connector.Error as err:
         return jsonify(message="Failed to read data", error=str(err))
