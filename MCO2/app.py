@@ -56,7 +56,7 @@ def update_hosts():
     return jsonify(message="Hosts updated successfully", hosts=hosts)
 
 
-@app.route('/check_connection')
+@app.route('/configure_nodes')
 def check_connection():
     return render_template('manage_nodes.html')
 

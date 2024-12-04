@@ -15,41 +15,103 @@
     <br>
     <button class="node-button" onclick="window.location.href='/'">Back to Home</button>
 
-    <script>
-        let nodeStatus = {
-            'centraln': true,
-            'node2': true,
-            'node3': true
-        };
+<script>
+    // Default node addresses
+    const nodeAddresses = {
+        'centraln': "centraln.mysql.database.azure.com",
+        'node2': "node2.mysql.database.azure.com",
+        'node3': "node3.mysql.database.azure.com"
+    };
 
-        // Dummy address to replace the actual node addresses
-        const dummyAddress = "dummy.address.com";
-
-        function toggleNode(node) {
-            // Toggle the node status
-            nodeStatus[node] = !nodeStatus[node];
-
-            // Change the button color based on the new state
-            const button = document.getElementById(node);
-            if (nodeStatus[node]) {
-                button.classList.remove('off');
-                button.classList.add('on');
-            } else {
-                button.classList.remove('on');
-                button.classList.add('off');
-            }
-
-            // Update the hosts list on the server
-            fetch('/update_hosts', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ nodeStatus: nodeStatus })
-            }).then(response => response.json())
-              .then(data => console.log("Hosts updated:", data))
-              .catch(error => console.error('Error updating hosts:', error));
+    // Function to get hosts from localStorage or initialize if not present
+    function getHosts() {
+        const storedHosts = localStorage.getItem('hosts');
+        if (storedHosts) {
+            return JSON.parse(storedHosts);  // Parse the JSON string into an array
+        } else {
+            // If not found in localStorage, return the default values
+            return [
+                "centraln.mysql.database.azure.com",
+                "node2.mysql.database.azure.com",
+                "node3.mysql.database.azure.com"
+            ];
         }
-    </script>
+    }
+
+    // Function to save hosts to localStorage
+    function saveHosts(hosts) {
+        localStorage.setItem('hosts', JSON.stringify(hosts));  // Save as a JSON string
+    }
+
+    // Function to determine the status of a node (on if it is in hosts, off otherwise)
+    function getNodeStatus(node) {
+        const hosts = getHosts();
+        return hosts.includes(nodeAddresses[node]);
+    }
+
+    // Function to update button color based on node status
+    function updateButtonState(node) {
+        const button = document.getElementById(node);
+        const status = getNodeStatus(node);
+
+        // Update the button color based on the current status
+        if (status) {
+            button.classList.remove('off');
+            button.classList.add('on');
+        } else {
+            button.classList.remove('on');
+            button.classList.add('off');
+        }
+    }
+
+    // Initial setup: Ensure buttons reflect their correct states when the page loads
+    window.onload = function() {
+        const hosts = getHosts();  // Get the current hosts list from localStorage
+
+        // Ensure all buttons are in their correct initial state
+        for (const node in nodeAddresses) {
+            updateButtonState(node);
+        }
+    };
+
+    // Toggle the node status when the button is clicked
+    function toggleNode(node) {
+        const hosts = getHosts();  // Get the current hosts list from localStorage
+
+        // Toggle the node's status (this would reflect the actual state in db or external logic)
+        if (getNodeStatus(node)) {
+            // If node is currently on, it will be turned off
+            hosts.splice(hosts.indexOf(nodeAddresses[node]), 1);
+        } else {
+            // If node is currently off, it will be turned on
+            hosts.push(nodeAddresses[node]);
+        }
+
+        // Save the updated hosts list to localStorage
+        saveHosts(hosts);
+
+        // Update the button state based on the new hosts array
+        updateButtonState(node);
+
+        // Optionally, send the updated hosts list to the server (if needed)
+        fetch('/update_hosts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ nodeStatus: {
+                'centraln': getNodeStatus('centraln'),
+                'node2': getNodeStatus('node2'),
+                'node3': getNodeStatus('node3')
+            }})
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Hosts updated:", data);
+        })
+        .catch(error => console.error('Error updating hosts:', error));
+    }
+</script>
+
 </body>
 </html>
