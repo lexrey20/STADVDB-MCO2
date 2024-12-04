@@ -177,9 +177,7 @@ def read_data():
 
         result = []
         num_hosts = len(available_nodes)
-        print("available nodes: ", num_hosts)
         rows_per_host = total_rows // num_hosts
-        print("total rows: ", total_rows)
         remainder = total_rows % num_hosts
 
         for i, host in enumerate(db_hosts.values()):
@@ -190,7 +188,6 @@ def read_data():
                 end_id += 1
 
             print(f"Host: {host}, Query: SELECT * FROM {TABLE_NAME} WHERE id BETWEEN {start_id} AND {end_id}")
-
 
             try:
                 cnx = mysql.connector.connect(
@@ -252,20 +249,57 @@ def add():
         country = request.form['country']
 
         try:
-            cur = db.connection.cursor()
-            cur.execute(f"""
-                INSERT INTO {TABLE_NAME} (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country))
-            db.connection.commit()
-            cur.close()
+            # RECOVERY IMPLEMENTATION
+            available_nodes = []
+            hosts = session.get('hosts', [None, None, None])
+
+            # Check available hosts
+            for host in hosts:
+                if host is None:
+                    continue
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cnx.close()
+                    available_nodes.append(host)
+                except mysql.connector.Error:
+                    pass
+
+            if not available_nodes:
+                return jsonify(message="No nodes available", error="All connection attempts failed.")
+
+            # Insert into all available nodes for redundancy
+            for host in available_nodes:
+                try:
+                    cnx = mysql.connector.connect(
+                        user=DB_USER,
+                        password=DB_PASSWORD,
+                        host=host,
+                        port=DB_PORT,
+                        database=DB_NAME,
+                    )
+                    cursor = cnx.cursor()
+                    cursor.execute(f"""
+                        INSERT INTO {TABLE_NAME} (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (names, date_x, score, genre, overview, crew, orig_title, status, orig_lang, budget_x, revenue, country))
+                    cnx.commit()
+                    cursor.close()
+                    cnx.close()
+                except mysql.connector.Error as err:
+                    return jsonify(message=f"Failed to add data to host {host}", error=str(err))
 
             return redirect('/')
+
         except Exception as e:
             return f"Error occurred while adding: {str(e)}"
     else:
         return render_template('add.html')
-
 @app.route('/delete/<string:movie_id>')
 def delete(movie_id):
     try:
