@@ -57,10 +57,23 @@ def get_hosts():
 def check_connection():
     return render_template('manage_nodes.html')
 
-
 @app.route('/load_data')
 def load_data():
     try:
+        # Retrieve the list of hosts from the session
+        hosts = session.get('hosts', [])
+
+        # Check if there are any available hosts
+        if not hosts:
+            return jsonify(message="No hosts available in session", error="Hosts list is empty")
+
+        # Use the first available host (ensure it's not empty)
+        host = next((h for h in hosts if h), None)
+
+        # If no valid host is found, return an error message
+        if not host:
+            return jsonify(message="No valid hosts found", error="No non-empty host in the list")
+
         file_path = "imdb.csv"
         df = pd.read_csv(file_path)
         df = df.head(1500)
@@ -71,7 +84,7 @@ def load_data():
         cnx = mysql.connector.connect(
             user=DB_USER,
             password=DB_PASSWORD,
-            host=DB_HOST,
+            host=host,
             port=DB_PORT,
             database=DB_NAME,
         )

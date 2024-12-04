@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Homepage</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Add jQuery -->
 </head>
 <body>
+    <!-- Status Message (fixed at the top of the page) -->
+    <div id="status-message" style="display:none; padding: 10px; background-color: #f4f7f6; color: #333; position: fixed; top: 0; left: 0; width: 100%; text-align: center; z-index: 9999; font-weight: bold;"></div>
+
     <h1>MCO2 Transaction Management</h1>
     <p>Choose an option below:</p>
     <button class="node-button" onclick="window.location.href='/configure_nodes'">Configure Nodes</button><br>
@@ -15,5 +19,45 @@
     <button class="node-button" onclick="window.location.href='/read_data'">Read Records</button><br>
     <button class="node-button" onclick="window.location.href='/'">Update Record</button><br>
     <button class="node-button" onclick="window.location.href='/'">Delete Record</button><br>
+
+    <script>
+        // Function to load data using AJAX
+        $(document).ready(function() {
+            $('#loadDataBtn').on('click', function() {
+                // Show loading message
+                $('#status-message').text('Loading data... Please wait...').css('background-color', '#f0ad4e').show();
+
+                // Make AJAX request to load data
+                $.ajax({
+                    url: '/load_data', // Endpoint to call for loading data
+                    type: 'GET',
+                    success: function(response, status, xhr) {
+                        // Check if the response contains an error message
+                        if (xhr.status !== 200 || response.error) {
+                            // If there is an error (either by status code or error message in the response)
+                            $('#status-message').text('Failed to load data: ' + response.error).css('background-color', '#d9534f');
+                        } else {
+                            // Show success message
+                            $('#status-message').text(response.message).css('background-color', '#4CAF50');
+                        }
+
+                        // Fade out the message after 3 seconds
+                        setTimeout(function() {
+                            $('#status-message').fadeOut(1500); // Fade out in 1.5 seconds
+                        }, 3000); // Wait for 3 seconds before fading
+                    },
+                    error: function(xhr, status, error) {
+                        // Show error message
+                        $('#status-message').text('Failed to load data: ' + error).css('background-color', '#d9534f');
+
+                        // Fade out the message after 3 seconds
+                        setTimeout(function() {
+                            $('#status-message').fadeOut(1500); // Fade out in 1.5 seconds
+                        }, 3000); // Wait for 3 seconds before fading
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
