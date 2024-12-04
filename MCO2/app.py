@@ -1,8 +1,9 @@
-from flask import Flask, jsonify, render_template_string, request, render_template
+from flask import Flask, jsonify, session, request, render_template
 import mysql.connector
 import pandas as pd
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # key for signing session cookies
 
 # Database connection parameters
 DB_USER = "dbadmin"
@@ -11,13 +12,6 @@ DB_HOST = "centraln.mysql.database.azure.com"
 DB_PORT = 3306
 DB_NAME = "mco2"
 TABLE_NAME = "imdb"
-
-# Node addresses
-hosts = [
-    "centraln.mysql.database.azure.com",
-    "node2.mysql.database.azure.com",
-    "node3.mysql.database.azure.com"
-]
 
 db_hosts = {1: None, 2: None, 3: None}
 @app.route('/')
@@ -31,30 +25,24 @@ dummy_address = "dummy.address.com"
 
 @app.route('/update_hosts', methods=['POST'])
 def update_hosts():
-    global hosts
-
     node_status = request.json.get('nodeStatus')
-
     if node_status is None:
         return jsonify(message="Node status not provided", error="Bad request"), 400
 
-    if node_status['centraln']:
-        hosts[0] = "centraln.mysql.database.azure.com"
-    else:
-        hosts[0] = dummy_address
+    # Set the session data based on the node status
+    session['hosts'] = [
+        "centraln.mysql.database.azure.com" if node_status['centraln'] else None,
+        "node2.mysql.database.azure.com" if node_status['node2'] else None,
+        "node3.mysql.database.azure.com" if node_status['node3'] else None
+    ]
 
-    if node_status['node2']:
-        hosts[1] = "node2.mysql.database.azure.com"
-    else:
-        hosts[1] = dummy_address
+    return jsonify(message="Hosts updated successfully", hosts=session['hosts'])
 
-    if node_status['node3']:
-        hosts[2] = "node3.mysql.database.azure.com"
-    else:
-        hosts[2] = dummy_address
-
-    return jsonify(message="Hosts updated successfully", hosts=hosts)
-
+@app.route('/get_hosts', methods=['GET'])
+def get_hosts():
+    # Access the session data
+    hosts = session.get('hosts', [])
+    return jsonify(hosts=hosts)
 
 @app.route('/configure_nodes')
 def check_connection():
@@ -136,6 +124,7 @@ def read_data():
         # RECOVERY IMPLEMENTATION
         # if 1 host is down, other hosts pick up workload
         available_nodes = []
+        hosts = session.get('hosts', [None, None, None])  # Default to None if hosts not in session
 
         # test connection to each host and add available nodes to the list
         for host in hosts:
