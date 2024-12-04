@@ -1,4 +1,4 @@
 Flask==2.2.2
-SQLAlchemy==1.4.40
 
 mysql~=0.0.3
+pandas~=2.2.3
