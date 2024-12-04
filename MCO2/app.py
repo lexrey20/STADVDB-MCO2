@@ -246,7 +246,6 @@ def add():
     else:
         return render_template('add.html')
 
-
 @app.route('/delete/<string:movie_id>')
 def delete(movie_id):
     try:

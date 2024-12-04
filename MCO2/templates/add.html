@@ -10,43 +10,49 @@
 
     <div class="form">
         <form action="/add" method="POST">
-            Names <input type="text" name="names"><br>
-            Release Date <input type="date" name="date_x"><br>
-            Score <input type="number" name="score" step="0.1"><br>
+            <!-- Name -->
+            Name <input type="text" name="names" placeholder="Creed III"><br>
+
+            <!-- Release Date -->
+            Release Date <input type="date" name="date_x" value="2023-03-02"><br>
+
+            <!-- Score -->
+            Score <input type="number" name="score" step="0.1" placeholder="73"><br>
+
+            <!-- Genre -->
             <label for="genre">Genre:</label>
-            <select id="genre" name="genre" multiple>
-              <option value="action">Action</option>
-              <option value="science_fiction">Science Fiction</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="thriller">Thriller</option>
-              <option value="crime">Crime</option>
-              <option value="drama">Drama</option>
-              <option value="romance">Romance</option>
-              <option value="adventure">Adventure</option>
-              <option value="animation">Animation</option>
-              <option value="comedy">Comedy</option>
-              <option value="family">Family</option>
-              <option value="mystery">Mystery</option>
-              <option value="horror">Horror</option>
-              <option value="history">History</option>
-              <option value="war">War</option>
-              <option value="tv_movie">TV Movie</option>
-              <option value="music">Music</option>
-              <option value="western">Western</option>
-            </select><br>
-            Overview <textarea name="overview"></textarea><br>
-            Crew <input type="text" name="crew"><br>
-            Original Title <input type="text" name="orig_title"><br>
+            <!-- Simple text input for genres -->
+            <input type="text" id="genre" name="genre" placeholder="Drama, Action"><br>
+
+            <!-- Overview -->
+            Overview <textarea name="overview" placeholder="After dominating the boxing world, Adonis Creed has been thriving in both his career and family life. When a childhood friend and former boxing prodigy, Damien Anderson, resurfaces after serving a long sentence in prison, he is eager to prove that he des..."></textarea><br>
+
+            <!-- Crew -->
+            Crew <input type="text" name="crew" placeholder="Michael B. Jordan, Adonis Creed, Tessa Thompson, Bianca Taylor, Jonathan Majors, Damien Anderson, Wood Harris, Tony 'Little Duke' Evers, Phylicia Rashād, Mary Anne Creed, Mila Davis-Kent, Amara Creed, Florian Munteanu, Viktor Drago, José Benavidez Jr.,..."><br>
+
+            <!-- Original Title -->
+            Original Title <input type="text" name="orig_title" placeholder="Creed III"><br>
+
+            <!-- Status -->
             <label for="status">Status:</label>
             <select id="status" name="status">
-              <option value="released">Released</option>
+              <option value="released" selected>Released</option>
               <option value="post_production">Post Production</option>
               <option value="in_production">In Production</option>
             </select><br>
-            Original Language <input type="text" name="orig_lang"><br>
-            Budget <input type="number" name="budget_x" step="0.01"><br>
-            Revenue <input type="number" name="revenue" step="0.01"><br>
-            Country <input type="text" name="country"><br>
+
+            <!-- Original Language -->
+            Original Language <input type="text" name="orig_lang" placeholder="English"><br>
+
+            <!-- Budget -->
+            Budget <input type="number" name="budget_x" step="0.01" placeholder="75000000"><br>
+
+            <!-- Revenue -->
+            Revenue <input type="number" name="revenue" step="0.01" placeholder="271616668.0"><br>
+
+            <!-- Country -->
+            Country <input type="text" name="country" placeholder="AU" maxlength="2"><br>
+
             <input type="submit" value="Add Movie">
         </form>
     </div>
